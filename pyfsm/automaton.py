@@ -45,14 +45,5 @@ class State(Mapping):
         
         def __len__(self):
             return len(self.transitions)
-
-class Automaton:
-    def __init__(self):
-        self.states = {}
-        self._curr = None
-
-    def start_from(self, state_name:str) -> TAutomaton:
-        self._curr = State(state_name)
-        self.start = self._curr
     
         
