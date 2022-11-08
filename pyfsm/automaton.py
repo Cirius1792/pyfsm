@@ -46,4 +46,21 @@ class State(Mapping):
         def __len__(self):
             return len(self.transitions)
     
-        
+
+class Automaton:
+
+    def start_from(self, state_name:str) -> TAutomaton:
+        pass
+    
+    def go_in(self, state_name:str) -> TAutomaton:
+        pass
+
+    def coming_from(self, state_name:str) -> TAutomaton:
+        pass
+
+    def because_of(self, event:str) -> TAutomaton:
+        pass
+    
+    def doing(self, action:str) -> TAutomaton:
+        pass
+            

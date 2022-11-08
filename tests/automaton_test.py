@@ -1,5 +1,5 @@
 from unittest import TestCase
-from pyfsm.automaton import State, TransitionError
+from pyfsm.automaton import Automaton, State, TransitionError
 
 
 class StatesTestCase(TestCase):
@@ -35,3 +35,16 @@ class StatesTestCase(TestCase):
         self.assertEqual("unlocked", curr_state.name)
         curr_state = curr_state["push"][1]
         self.assertEqual("locked", curr_state.name)
+
+class AutomatonTestCase(TestCase):
+    
+    def test_automaton(self):
+        fsm = Automaton().start_from("start") \
+            .go_in("state_a").because_of("E1").doing("B1") \
+            .coming_from("start").go_in("state_b").because_of("E2").doing("B2") \
+            .coming_from("state_b").go_in("state_a").because_of("E1").doing("B1")
+        
+        self.assertEqual("start", fsm.get_initial_state())
+        self.assertEqual("start", fsm.get_current_state())
+        self.assertEqual("B1", fsm("E1"))
+        self.assertEqual("state_a", fsm.get_current_state())
