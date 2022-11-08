@@ -14,7 +14,7 @@ class AutomatonTestCase(TestCase):
         start_state = State("start").when("E1")\
             .do("B1") \
             .go_in(state)
-        self.assertEqual()
+        self.assertEqual(state.name, start_state["E1"][1].name)
 
 
     # def test_build_automaton(self):

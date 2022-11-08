@@ -1,15 +1,16 @@
 from typing import TypeVar, List, Tuple
-
+from collections.abc import Mapping
 TState = TypeVar("TState", bound="State")
 TAutomaton = TypeVar("TAutomaton", bound="Automaton")
 
-class TransitionError(Error):
+class TransitionError(Exception):
     def __init__(self, state, event):
-        Error.__init__(self, f"Event {event} not supported state {state}")
+        Exception.__init__(self, f"Event {event} not supported state {state}")
         self.state = state
         self.event = event
 
-class State:
+class State(Mapping):
+
         def __init__(self, name) -> None:
             self.name = name
             self.actions = {}
@@ -30,14 +31,21 @@ class State:
         def get_action(self, event):
             return self.actions[event]
         
-        def get_next(self, event) -> Tuple[str, TState]:
+            
+        def __getitem__(self, event):
             if event not in self.transitions:
                 raise TransitionError(self.name, event)
             action = None
             if event in self.actions:
                 action = self.actions[event]
             return (action, self.transitions[event])
-            
+        
+        def __iter__(self):
+            return self.transitions.__iter__()
+        
+        def __len__(self):
+            return len(self.transitions)
+
 class Automaton:
     def __init__(self):
         self.states = {}
@@ -47,6 +55,4 @@ class Automaton:
         self._curr = State(state_name)
         self.start = self._curr
     
-    def go_in(self, target_name:str) -> TAutomaton:
-        self._curr.
         
