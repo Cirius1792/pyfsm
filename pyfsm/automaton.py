@@ -23,36 +23,55 @@ class MissingStateDeclarationError(Exception):
 class State(Mapping):
     def __init__(self, name) -> None:
         self.name = name
-        self._event = None
         self.actions = {}
         self.transitions = {}
+        self._event = None
+        self._action = None
+        self._target = None
+
+    def _reset(self):
+        self._event = None
+        self._action = None
+        self._target = None
 
     def when(self, event) -> TState:
         self._event = event
+        clear = False
+        if self._action:
+            self.do(self._action)
+            clear = True
+        if self._target is not None:
+            self.go_in(self._target)
+            clear = True
+        if clear:
+            self._reset()
         return self
 
     def do(self, output) -> TState:
         if not self._event:
-            raise StateConfigurationError(self.name, None)
+            self._action = output
+            return self
         self.actions[self._event] = output
         return self
 
     def go_in(self, target: TState) -> TState:
         if not self._event:
-            raise StateConfigurationError(self.name, None)
+            self._target = target
+            return self
         self.transitions[self._event] = target
         return self
 
     def get_action(self, event):
         return self.actions[event]
 
-    def __getitem__(self, event):
-        if event not in self.transitions:
-            raise StateConfigurationError(self.name, event)
+    def __getitem__(self, event) -> Tuple[str, TState]:
+        target = self
+        if event in self.transitions:
+            target = self.transitions[event]
         action = None
         if event in self.actions:
             action = self.actions[event]
-        return (action, self.transitions[event])
+        return (action, target)
 
     def __iter__(self):
         return self.transitions.__iter__()
@@ -99,13 +118,13 @@ class Automaton:
 
     def get_initial_state(self) -> State:
         return self._initial_state
-    
+
     def get_current_state(self) -> State:
         if self._current_state is None:
             self._current_state = self._initial_state
         return self._current_state
-    
+
     def __call__(self, event):
-      action, next_state = self._current_state[event]
-      self._current_state = next_state
-      return action  
+        action, next_state = self._current_state[event]
+        self._current_state = next_state
+        return action

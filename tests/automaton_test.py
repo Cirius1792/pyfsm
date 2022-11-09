@@ -3,12 +3,38 @@ from pyfsm.automaton import Automaton, State, StateConfigurationError
 
 
 class StatesTestCase(TestCase):
-    def test_build_state(self):
+    def test_build_state_syntax2(self):
         state = State("start").when("E1").do("B1")
         self.assertEqual("B1", state.get_action("E1"))
-        state = State("state_a").when("E1").do("B1").when("E2").do("B2")
+        state = State("state_a").when("E1").do("B1").go_in(State("state_a"))\
+            .when("E2").do("B2").go_in(State("state_b"))
         self.assertEqual("B1", state.get_action("E1"))
         self.assertEqual("B2", state.get_action("E2"))
+        self.assertEqual("B1", state["E1"][0])
+        self.assertEqual("state_a", state["E1"][1].name)
+        self.assertEqual("B2", state["E2"][0])
+        self.assertEqual("state_b", state["E2"][1].name)
+    
+
+    def test_build_state_syntax2(self):
+        
+        state = State("state_a").go_in(State("state_a")).do("B1").when("E1")\
+            .when("E2").do("B2").go_in(State("state_b"))
+        self.assertEqual("B1", state.get_action("E1"))
+        self.assertEqual("B2", state.get_action("E2"))
+        self.assertEqual("B1", state["E1"][0])
+        self.assertEqual("state_a", state["E1"][1].name)
+        self.assertEqual("B2", state["E2"][0])
+        self.assertEqual("state_b", state["E2"][1].name)
+        
+        state = State("state_a").do("B1").when("E1")\
+            .do("B2").when("E2")
+        self.assertEqual("B1", state.get_action("E1"))
+        self.assertEqual("B2", state.get_action("E2"))
+        self.assertEqual("B1", state["E1"][0])
+        self.assertEqual("state_a", state["E1"][1].name)
+        self.assertEqual("B2", state["E2"][0])
+        self.assertEqual("state_a", state["E2"][1].name)
 
     def test_build_automa(self):
         state = State("state_a").when("E1").do("B1").when("E2").do("B2")
