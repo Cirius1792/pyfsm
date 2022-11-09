@@ -1,5 +1,5 @@
 from unittest import TestCase
-from pyfsm.automaton import Automaton, State, TransitionError
+from pyfsm.automaton import Automaton, State, StateConfigurationError
 
 
 class StatesTestCase(TestCase):
@@ -17,7 +17,7 @@ class StatesTestCase(TestCase):
 
     def test_inconsistent_event(self):
         state = State("state_a").when("E1").do("B1").when("E2").do("B2")
-        with self.assertRaises(TransitionError):
+        with self.assertRaises(StateConfigurationError):
             state["E3"]
 
     def test_turnstile_fsm(self):
@@ -40,11 +40,22 @@ class AutomatonTestCase(TestCase):
     
     def test_automaton(self):
         fsm = Automaton().start_from("start") \
-            .go_in("state_a").because_of("E1").doing("B1") \
-            .coming_from("start").go_in("state_b").because_of("E2").doing("B2") \
-            .coming_from("state_b").go_in("state_a").because_of("E1").doing("B1")
+            .when("E1").go_in("state_a").doing("B1") \
+            .coming_from("start").when("E2").go_in("state_b").doing("B2") \
+            .coming_from("state_b").when("E1").go_in("state_a").doing("B1")
         
-        self.assertEqual("start", fsm.get_initial_state())
-        self.assertEqual("start", fsm.get_current_state())
+        self.assertEqual("start", fsm.get_initial_state().name)
+        self.assertEqual("start", fsm.get_current_state().name)
         self.assertEqual("B1", fsm("E1"))
-        self.assertEqual("state_a", fsm.get_current_state())
+        self.assertEqual("state_a", fsm.get_current_state().name)
+        
+    def test_automaton_2(self):
+        fsm = Automaton().start_from("start") \
+            .go_in("state_a").when("E1").doing("B1") \
+            .coming_from("start").go_in("state_b").when("E2").doing("B2") \
+            .coming_from("state_b").go_in("state_a").when("E1").doing("B1")
+        
+        self.assertEqual("start", fsm.get_initial_state().name)
+        self.assertEqual("start", fsm.get_current_state().name)
+        self.assertEqual("B1", fsm("E1"))
+        self.assertEqual("state_a", fsm.get_current_state().name)
