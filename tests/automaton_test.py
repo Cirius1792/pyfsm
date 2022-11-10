@@ -77,9 +77,9 @@ class AutomatonTestCase(TestCase):
         
     def test_automaton_2(self):
         fsm = Automaton().start_from("start") \
-            .go_in("state_a").when("E1").doing("B1") \
-            .coming_from("start").go_in("state_b").when("E2").doing("B2") \
-            .coming_from("state_b").go_in("state_a").when("E1").doing("B1")
+            .go_in("state_a").doing("B1").when("E1") \
+            .coming_from("start").go_in("state_b").doing("B2").when("E2") \
+            .coming_from("state_b").go_in("state_a").doing("B1").when("E1")
         
         self.assertEqual("start", fsm.get_initial_state().name)
         self.assertEqual("start", fsm.get_current_state().name)

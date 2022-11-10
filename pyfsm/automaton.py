@@ -128,6 +128,8 @@ class Automaton:
         return self._current_state
 
     def __call__(self, event):
+        if self._current_state is None:
+            self._current_state = self._initial_state
         action, next_state = self._current_state[event]
         self._current_state = next_state
         return action
