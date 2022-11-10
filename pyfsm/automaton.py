@@ -21,7 +21,15 @@ class MissingStateDeclarationError(Exception):
 
 
 class State(Mapping):
+    """
+    Represents the state of Finite State Machine, characterized by:
+     - state name
+     - transition matrix, in which for each event is specified if a transition will occurr and the next corresponding state
+     - actions to be perfomed for each event occurring in the current state
+    """
+
     def __init__(self, name, fail_for_undefined_events=False) -> None:
+
         self.name = name
         self.actions = {}
         self.transitions = {}
@@ -36,6 +44,9 @@ class State(Mapping):
         self._target = None
 
     def when(self, event) -> TState:
+        """"
+        specify the event triggering the transition
+        """
         self._event = event
         clear = False
         if self._action:
@@ -49,6 +60,7 @@ class State(Mapping):
         return self
 
     def do(self, output) -> TState:
+        """What to do when the transition will occurr"""
         if not self._event:
             self._action = output
             return self
@@ -56,6 +68,7 @@ class State(Mapping):
         return self
 
     def go_in(self, target: TState) -> TState:
+        "In which state to go when the transition will occurr"
         if not self._event:
             self._target = target
             return self
@@ -74,6 +87,7 @@ class State(Mapping):
         )
 
     def get_action(self, event):
+        """Return the action associated to the transition that will occurr when the event event will be recieved"""
         return self.actions[event]
 
     def __getitem__(self, event) -> Tuple[str, TState]:
