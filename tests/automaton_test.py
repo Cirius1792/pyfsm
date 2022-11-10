@@ -85,3 +85,15 @@ class AutomatonTestCase(TestCase):
         self.assertEqual("start", fsm.get_current_state().name)
         self.assertEqual("B1", fsm("E1"))
         self.assertEqual("state_a", fsm.get_current_state().name)
+
+    def test_turnstile_fsm(self):
+            fsm = Automaton().start_from("locked").go_in("locked").when("push") \
+                    .coming_from("locked").go_in("unlocked").when("coin") \
+                    .coming_from("unlocked").go_in("unlocked").when("coin") \
+                    .coming_from("unlocked").go_in("locked").when("push")
+            fsm("push")
+            self.assertEqual("locked", fsm.get_current_state().name)
+            fsm("coin")
+            self.assertEqual("unlocked", fsm.get_current_state().name)
+            fsm("push")
+            self.assertEqual("locked", fsm.get_current_state().name)
