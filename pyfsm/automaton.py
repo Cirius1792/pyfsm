@@ -21,13 +21,14 @@ class MissingStateDeclarationError(Exception):
 
 
 class State(Mapping):
-    def __init__(self, name) -> None:
+    def __init__(self, name, fail_for_undefined_events=False) -> None:
         self.name = name
         self.actions = {}
         self.transitions = {}
         self._event = None
         self._action = None
         self._target = None
+        self._strict_mode = fail_for_undefined_events
 
     def _reset(self):
         self._event = None
@@ -71,6 +72,8 @@ class State(Mapping):
         action = None
         if event in self.actions:
             action = self.actions[event]
+        elif self._strict_mode:
+            raise StateConfigurationError(self.name, event)
         return (action, target)
 
     def __iter__(self):

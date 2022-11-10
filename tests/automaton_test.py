@@ -42,7 +42,7 @@ class StatesTestCase(TestCase):
         self.assertEqual(state.name, start_state["E1"][1].name)
 
     def test_inconsistent_event(self):
-        state = State("state_a").when("E1").do("B1").when("E2").do("B2")
+        state = State("state_a", fail_for_undefined_events=True).when("E1").do("B1").when("E2").do("B2")
         with self.assertRaises(StateConfigurationError):
             state["E3"]
 
