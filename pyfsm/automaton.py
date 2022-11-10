@@ -20,6 +20,13 @@ class MissingStateDeclarationError(Exception):
         )
 
 
+class IllegalEventError(Exception):
+    def __init__(self, state, event):
+        Exception.__init__(self, f"Event {event} not supported in state {state}")
+        self.state = state
+        self.event = event
+
+
 class State(Mapping):
     """
     Represents the state of Finite State Machine, characterized by:
@@ -44,7 +51,7 @@ class State(Mapping):
         self._target = None
 
     def when(self, event) -> TState:
-        """"
+        """ "
         specify the event triggering the transition
         """
         self._event = event
@@ -76,15 +83,7 @@ class State(Mapping):
         return self
 
     def __repr__(self):
-        return (
-            "State: "
-            + self.name
-            + " transitions:["
-            + self.transitions.__repr__()
-            + "] actions:["
-            + self.actions.__repr__()
-            + "]"
-        )
+        return "State: " + self.name
 
     def get_action(self, event):
         """Return the action associated to the transition that will occurr when the event event will be recieved"""
@@ -100,6 +99,9 @@ class State(Mapping):
         elif self._strict_mode:
             raise StateConfigurationError(self.name, event)
         return (action, target)
+
+    def __contains__(self, event):
+        return event in self.transitions
 
     def __iter__(self):
         return self.transitions.__iter__()
@@ -155,6 +157,8 @@ class Automaton:
     def __call__(self, event):
         if self._current_state is None:
             self._current_state = self._initial_state
+        if event not in self._current_state:
+            raise IllegalEventError(self._current_state.name, event)
         action, next_state = self._current_state[event]
         self._current_state = next_state
         return action
