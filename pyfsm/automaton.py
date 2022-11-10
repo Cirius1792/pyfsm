@@ -62,6 +62,17 @@ class State(Mapping):
         self.transitions[self._event] = target
         return self
 
+    def __repr__(self):
+        return (
+            "State: "
+            + self.name
+            + " transitions:["
+            + self.transitions.__repr__()
+            + "] actions:["
+            + self.actions.__repr__()
+            + "]"
+        )
+
     def get_action(self, event):
         return self.actions[event]
 
