@@ -38,8 +38,9 @@ class State(Mapping):
     """
     Represents the state of Finite State Machine, characterized by:
      - state name
-     - transition matrix, in which for each event is specified if a transition will occurr and the next corresponding state
-     - actions to be perfomed for each event occurring in the current state
+     - transition matrix, in which for each event is specified if a transition will occur and the next corresponding
+     state
+     - actions to be performed for each event occurring in the current state
     """
 
     def __init__(self, name, fail_for_undefined_events=False) -> None:
@@ -73,7 +74,7 @@ class State(Mapping):
         return self
 
     def do(self, action) -> TState:
-        """What to do when the transition will occurr"""
+        """What to do when the transition will occur"""
         if not self._event:
             self._action = action
             return self
@@ -87,7 +88,7 @@ class State(Mapping):
         return self
 
     def go_in(self, target: TState) -> TState:
-        "In which state to go when the transition will occurr"
+        "In which state to go when the transition will occur"
         if not self._event:
             self._target = target
             return self
@@ -108,7 +109,7 @@ class State(Mapping):
     def __getitem__(self, event) -> Tuple[str, TState]:
         if event in self.transitions:
             action_target = self.transitions[event]
-            return (action_target.action, action_target.target)
+            return action_target.action, action_target.target
         else:
             raise StateConfigurationError(self.name, event)
 
@@ -122,18 +123,21 @@ class State(Mapping):
         return len(self.transitions)
 
     def __eq__(self, o):
-        if not isinstance(o, State):
-            return False
-        if self.name != o.name:
-            return False
-        if set(self.transitions.keys()) != set(o.transitions.keys()):
-            return False
-        for k, v in self.transitions.items():
-            if v.action != o.transitions[k].action or v.target.name != o.transitions[k].target.name:
+        def _eq(state_a, state_b, visited):
+            if not isinstance(state_b, State):
                 return False
-            if v.target.name != self.name and v.target != o.transitions[k].target:
+            if state_a.name == state_b.name and state_a.name in visited:
+                return True
+            if state_a.name != state_b.name:
                 return False
-        return True
+            if set(state_a.transitions.keys()) != set(state_b.transitions.keys()):
+                return False
+            visited.add(state_a.name)
+            for k, v in state_a.transitions.items():
+                if v.action != state_b.transitions[k].action or not _eq(v.target, state_b.transitions[k].target, visited):
+                    return False
+            return True
+        return _eq(self, o, set())
 
     @staticmethod
     def dump(state: TState):
@@ -221,3 +225,8 @@ class Automaton:
         action, next_state = self._current_state[event]
         self._current_state = next_state
         return action
+
+    def __eq__(self, o):
+        if not isinstance(o, Automaton) or o is None:
+            return False
+        return self._initial_state != o.get_initial_state()
