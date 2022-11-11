@@ -1,3 +1,4 @@
+import json
 from unittest import TestCase
 from pyfsm.automaton import Automaton, State, StateConfigurationError, IllegalEventError
 
@@ -23,7 +24,6 @@ class StatesTestCase(TestCase):
         self.assertEqual("state_b", state["E2"][1].name)
 
     def test_build_state_syntax2(self):
-
         state = (
             State("state_a")
             .go_in(State("state_a"))
@@ -80,7 +80,6 @@ class StatesTestCase(TestCase):
         curr_state = curr_state["push"][1]
         self.assertEqual("locked", curr_state.name)
 
-
     def test_state_comparison(self):
         state_a = State("state_a").when("E1").do("B1").when("E2").do("B2")
         state_b = State("state_a").when("E1").do("B1").when("E2").do("B2")
@@ -91,24 +90,51 @@ class StatesTestCase(TestCase):
         state_a = State("state_a").when("E1").do("B1").when("E2").do("B2")
         state_b = State("state_b").when("E1").do("B1").when("E2").do("B2")
         self.assertNotEqual(state_a, state_b, "Should fail because of state name")
-        
+
         state_a = State("state_a").when("E1").do("B1").when("E2").do("B2")
         state_b = State("state_a").when("E3").do("B1").when("E2").do("B2")
         self.assertNotEqual(state_a, state_b, "Should fail because of different even")
-        
+
     def test_dump_state_no_transitions(self):
         state = State("state_a").when("E1").do("B1").when("E2").do("B2")
-        dumped_state = state.dump()
-        restored_state = State.load(dumped_state)
-        self.assertEqual(state, restored_state) 
+        dumped_state = State.dump(state)
+        expected_dump = "[ " \
+                        '["state_a", "E1", "B1", "state_a"],' \
+                        '["state_a", "E2", "B2", "state_a"]' \
+                        " ]"
+        expected_loaded = json.loads(expected_dump)
+        self.assertEqual(expected_loaded, json.loads(dumped_state))
 
     def test_dump_state_with_transitions(self):
         state = State("state_a").when("E1").do("B1").when("E2").do("B2")
         start_state = State("start").when("E1").do("B1").go_in(state)
+        dumped_state = State.dump(start_state)
+        expected_dump = "[ " \
+                        '["start", "E1", "B1", "state_a"],' \
+                        '["state_a", "E1", "B1", "state_a"],' \
+                        '["state_a", "E2", "B2", "state_a"]' \
+                        " ]"
+        expected_loaded = json.loads(expected_dump)
+        self.assertEqual(expected_loaded, json.loads(dumped_state))
 
-        dumped_state = start_state.dump()
+    def test_load_state_with_transitions(self):
+        state = State("state_a").when("E1").do("B1").when("E2").do("B2")
+        start_state = State("start").when("E1").do("B1").go_in(state)
+        dump = "[ " \
+               '["start", "E1", "B1", "state_a"],' \
+               '["state_a", "E1", "B1", "state_a"],' \
+               '["state_a", "E2", "B2", "state_a"]' \
+               " ]"
+        loaded_state = State.load(dump)
+        self.assertEqual(start_state, loaded_state)
+
+    def test_dump_and_load_state(self):
+        state = State("state_a").when("E1").do("B1").when("E2").do("B2")
+        start_state = State("start").when("E1").do("B1").go_in(state)
+
+        dumped_state = State.dump(start_state)
         restored_state = State.load(dumped_state)
-        self.assertEqual(state, restored_state) 
+        self.assertEqual(start_state, restored_state)
 
 
 class AutomatonTestCase(TestCase):

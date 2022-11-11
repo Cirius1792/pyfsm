@@ -1,6 +1,8 @@
-from typing import TypeVar, List, Tuple, Dict
+from typing import TypeVar, Set, Tuple, Dict, Optional, List
 from collections.abc import Mapping
 from collections import namedtuple
+
+import json
 
 TState = TypeVar("TState", bound="State")
 TAutomaton = TypeVar("TAutomaton", bound="Automaton")
@@ -104,7 +106,6 @@ class State(Mapping):
         return self.transitions[event].action
 
     def __getitem__(self, event) -> Tuple[str, TState]:
-        target = self
         if event in self.transitions:
             action_target = self.transitions[event]
             return (action_target.action, action_target.target)
@@ -131,6 +132,39 @@ class State(Mapping):
             if v.action != o.transitions[k].action or v.target.name != o.transitions[k].target.name:
                 return False
         return True
+
+    @staticmethod
+    def dump(state: TState):
+        def _dump(current: State, visited: Set[str]) -> List[Tuple]:
+            if current.name in visited:
+                return []
+            nodes = []
+            visited.add(current.name)
+            for event, action_target_tuple in current.transitions.items():
+                nodes.append((current.name, event, action_target_tuple.action, action_target_tuple.target.name))
+                nodes = nodes + _dump(action_target_tuple.target, visited)
+            return nodes
+
+        return json.dumps(_dump(state, set()))
+
+    @staticmethod
+    def load(states_dump: str):
+        states_list = json.loads(states_dump)
+        this = None
+        states = {}
+        for name, event, action, target in states_list:
+            if name not in states:
+                states[name] = State(name)
+            if target not in states:
+                states[target] = State(target)
+            curr = states[name]
+            curr.do(action)
+            if name != target:
+                curr.go_in(states[target])
+            curr.when(event)
+            if this is None:
+                this = curr
+        return this
 
 
 class Automaton:
