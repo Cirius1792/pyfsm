@@ -102,7 +102,7 @@ class State(Mapping):
         return "State: " + self.name
 
     def get_action(self, event):
-        """Return the action associated to the transition that will occurr when the event event will be recieved"""
+        """Return the action associated to the transition that will occurr when the event will be recieved"""
         return self.transitions[event].action
 
     def __getitem__(self, event) -> Tuple[str, TState]:
