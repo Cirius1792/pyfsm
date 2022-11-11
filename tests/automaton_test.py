@@ -81,6 +81,36 @@ class StatesTestCase(TestCase):
         self.assertEqual("locked", curr_state.name)
 
 
+    def test_state_comparison(self):
+        state_a = State("state_a").when("E1").do("B1").when("E2").do("B2")
+        state_b = State("state_a").when("E1").do("B1").when("E2").do("B2")
+        self.assertEqual(state_a, state_b, "Should be equal")
+
+        self.assertNotEqual(state_a, "not a state", "Should fail because the reference object is not a State obj")
+
+        state_a = State("state_a").when("E1").do("B1").when("E2").do("B2")
+        state_b = State("state_b").when("E1").do("B1").when("E2").do("B2")
+        self.assertNotEqual(state_a, state_b, "Should fail because of state name")
+        
+        state_a = State("state_a").when("E1").do("B1").when("E2").do("B2")
+        state_b = State("state_a").when("E3").do("B1").when("E2").do("B2")
+        self.assertNotEqual(state_a, state_b, "Should fail because of different even")
+        
+    def test_dump_state_no_transitions(self):
+        state = State("state_a").when("E1").do("B1").when("E2").do("B2")
+        dumped_state = state.dump()
+        restored_state = State.load(dumped_state)
+        self.assertEqual(state, restored_state) 
+
+    def test_dump_state_with_transitions(self):
+        state = State("state_a").when("E1").do("B1").when("E2").do("B2")
+        start_state = State("start").when("E1").do("B1").go_in(state)
+
+        dumped_state = start_state.dump()
+        restored_state = State.load(dumped_state)
+        self.assertEqual(state, restored_state) 
+
+
 class AutomatonTestCase(TestCase):
     def test_automaton(self):
         fsm = (

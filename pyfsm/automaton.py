@@ -110,6 +110,20 @@ class State(Mapping):
     def __len__(self):
         return len(self.transitions)
 
+    def __eq__(self, o):
+        if not isinstance(o, State):
+            return False
+        if self.name != o.name:
+            return False
+        if set(self.transitions.keys()) != set(o.transitions.keys()):
+            return False
+        if set(self.actions.keys()) != set(o.actions.keys()):
+            return False
+        for k, v in self.transitions.items():
+            if v != o.transitions[k]: return False
+        for k, v in self.actions.items():
+            if v != o.actions[k]: return False
+        return True
 
 class Automaton:
     def __init__(self):
