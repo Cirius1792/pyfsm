@@ -21,6 +21,7 @@ class MissingStateDeclarationError(Exception):
 
 
 class IllegalEventError(Exception):
+    """This error is thrown when an event is issued in a state in which it is not allowed """
     def __init__(self, state, event):
         Exception.__init__(self, f"Event {event} not supported in state {state}")
         self.state = state
@@ -51,7 +52,7 @@ class State(Mapping):
         self._target = None
 
     def when(self, event) -> TState:
-        """ "
+        """
         specify the event triggering the transition
         """
         self._event = event
