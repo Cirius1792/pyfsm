@@ -1,8 +1,11 @@
-from typing import TypeVar, List, Tuple
+from typing import TypeVar, List, Tuple, Dict
 from collections.abc import Mapping
+from collections import namedtuple
 
 TState = TypeVar("TState", bound="State")
 TAutomaton = TypeVar("TAutomaton", bound="Automaton")
+
+ActionTargetTuple = namedtuple("ActionTargetTuple", "action target")
 
 
 class StateConfigurationError(Exception):
@@ -21,7 +24,8 @@ class MissingStateDeclarationError(Exception):
 
 
 class IllegalEventError(Exception):
-    """This error is thrown when an event is issued in a state in which it is not allowed """
+    """This error is thrown when an event is issued in a state in which it is not allowed"""
+
     def __init__(self, state, event):
         Exception.__init__(self, f"Event {event} not supported in state {state}")
         self.state = state
@@ -39,8 +43,7 @@ class State(Mapping):
     def __init__(self, name, fail_for_undefined_events=False) -> None:
 
         self.name = name
-        self.actions = {}
-        self.transitions = {}
+        self.transitions: Dict[ActionTargetTuple] = {}
         self._event = None
         self._action = None
         self._target = None
@@ -67,12 +70,18 @@ class State(Mapping):
             self._reset()
         return self
 
-    def do(self, output) -> TState:
+    def do(self, action) -> TState:
         """What to do when the transition will occurr"""
         if not self._event:
-            self._action = output
+            self._action = action
             return self
-        self.actions[self._event] = output
+        if self._event in self.transitions:
+            target = self.transitions[self._event].target
+        elif self._target is None:
+            target = self
+        else:
+            target = self._target
+        self.transitions[self._event] = ActionTargetTuple(action, target)
         return self
 
     def go_in(self, target: TState) -> TState:
@@ -80,7 +89,11 @@ class State(Mapping):
         if not self._event:
             self._target = target
             return self
-        self.transitions[self._event] = target
+        if self._event in self.transitions:
+            action = self.transitions[self._event].action
+        else:
+            action = self._action
+        self.transitions[self._event] = ActionTargetTuple(action, target)
         return self
 
     def __repr__(self):
@@ -88,18 +101,15 @@ class State(Mapping):
 
     def get_action(self, event):
         """Return the action associated to the transition that will occurr when the event event will be recieved"""
-        return self.actions[event]
+        return self.transitions[event].action
 
     def __getitem__(self, event) -> Tuple[str, TState]:
         target = self
         if event in self.transitions:
-            target = self.transitions[event]
-        action = None
-        if event in self.actions:
-            action = self.actions[event]
-        elif self._strict_mode:
+            action_target = self.transitions[event]
+            return (action_target.action, action_target.target)
+        else:
             raise StateConfigurationError(self.name, event)
-        return (action, target)
 
     def __contains__(self, event):
         return event in self.transitions
@@ -117,13 +127,11 @@ class State(Mapping):
             return False
         if set(self.transitions.keys()) != set(o.transitions.keys()):
             return False
-        if set(self.actions.keys()) != set(o.actions.keys()):
-            return False
         for k, v in self.transitions.items():
-            if v != o.transitions[k]: return False
-        for k, v in self.actions.items():
-            if v != o.actions[k]: return False
+            if v.action != o.transitions[k].action or v.target.name != o.transitions[k].target.name:
+                return False
         return True
+
 
 class Automaton:
     def __init__(self):
