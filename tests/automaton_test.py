@@ -93,7 +93,13 @@ class StatesTestCase(TestCase):
 
         state_a = State("state_a").when("E1").do("B1").when("E2").do("B2")
         state_b = State("state_a").when("E3").do("B1").when("E2").do("B2")
-        self.assertNotEqual(state_a, state_b, "Should fail because of different even")
+        self.assertNotEqual(state_a, state_b, "Should fail because of different event")
+
+        state_c = State("state_c").when("E1").go_in(State("state_x"))
+        state_c2 = State("state_c").when("E1").go_in(State("state_z"))
+        state_a = State("state_a").when("E1").do("B1").when("E2").do("B2").go_in(state_c)
+        state_b = State("state_a").when("E1").do("B1").when("E2").do("B2").go_in(state_c2)
+        self.assertNotEqual(state_a, state_b, "Should fail because of different target states")
 
     def test_dump_state_no_transitions(self):
         state = State("state_a").when("E1").do("B1").when("E2").do("B2")

@@ -131,6 +131,8 @@ class State(Mapping):
         for k, v in self.transitions.items():
             if v.action != o.transitions[k].action or v.target.name != o.transitions[k].target.name:
                 return False
+            if v.target.name != self.name and v.target != o.transitions[k].target:
+                return False
         return True
 
     @staticmethod
