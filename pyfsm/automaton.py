@@ -229,4 +229,4 @@ class Automaton:
     def __eq__(self, o):
         if not isinstance(o, Automaton) or o is None:
             return False
-        return self._initial_state != o.get_initial_state()
+        return self._initial_state == o.get_initial_state()

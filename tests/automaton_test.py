@@ -261,4 +261,4 @@ class AutomatonTestCase(TestCase):
             .when("push")
         )
         self.assertEqual(fsm1, fsm2)
-        self.assertEqual(fsm1, fsm3)
+        self.assertNotEqual(fsm1, fsm3)
