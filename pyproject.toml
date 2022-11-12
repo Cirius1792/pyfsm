@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "pyfsm"
+name = "pyautomaton"
 version = "0.2.0"
 description = ""
 authors = ["cirius1792 <cirolucio.tecce@gmail.com>"]

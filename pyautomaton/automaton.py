@@ -254,11 +254,10 @@ class Automaton:
                 or self.get_current_state().name != o.get_current_state().name
 
     def __dict__(self):
-        dct = {}
+        dct = {"states": self._initial_state.__dict__()}
         if self.name:
             dct['name'] = self.name
         dct['version'] = self.version
-        dct = {"states": self._initial_state.__dict__()}
         dct['current_state'] = self._current_state.name
         dct['initial_state'] = self._initial_state.name
         return dct
@@ -273,7 +272,7 @@ class Automaton:
         this = Automaton()
         if 'name' in dct:
             this.name = dct['name']
-        this.version = dict['version']
+        this.version = dct['version']
         state_list = dct['states']
         start_state = None
         for name, event, action, target in state_list:
