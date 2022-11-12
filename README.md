@@ -3,7 +3,7 @@
 ## Description 
 PyAutomaton is a simple library implementing Mealy state machines, thus meaning that the events produced by the automaton are determined by the tuple (state, event) and not only on the current state, as happens with Moore state machines. 
 
-## Usage
+## Basic Usage
 PyAutomaton offers the possibility of declare State Machines by using a fluent descriptive style.
 For example, given the state machine in the following figure: 
 ![turntile-picture](docs/imgs/turntile.png)
@@ -21,3 +21,11 @@ And the machine can run by invoking the fsm object as follow:
 fsm('push')
 ```
 each invocation triggers a state transition and returns the corresponding action, if any.
+
+## Dump and restore the state machine 
+It is possible to dump a state machine. A state machine dump is self consistent, thus meaning that it emodies both the state machine configuration as well as the current state of the automaton:
+```python
+dumped_machine = Automaton.dump(fsm)
+machine = Automaton.load(dumped_machine)
+```
+The dump is produced in json format. 
