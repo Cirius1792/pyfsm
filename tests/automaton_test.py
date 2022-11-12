@@ -53,17 +53,6 @@ class StatesTestCase(TestCase):
         start_state = State("start").when("E1").do("B1").go_in(state)
         self.assertEqual(state.name, start_state["E1"][1].name)
 
-    def test_inconsistent_event(self):
-        state = (
-            State("state_a", fail_for_undefined_events=True)
-            .when("E1")
-            .do("B1")
-            .when("E2")
-            .do("B2")
-        )
-        with self.assertRaises(StateConfigurationError):
-            state["E3"]
-
     def test_turnstile_fsm(self):
         unlocked = State("unlocked")
         unlocked.when("coin").go_in(unlocked)
@@ -262,3 +251,26 @@ class AutomatonTestCase(TestCase):
         )
         self.assertEqual(fsm1, fsm2)
         self.assertNotEqual(fsm1, fsm3)
+
+    def test_dump_and_load_automaton(self):
+        fsm = (
+            Automaton()
+            .start_from("locked")
+            .go_in("locked")
+            .when("push")
+            .coming_from("locked")
+            .go_in("unlocked")
+            .when("coin")
+            .coming_from("unlocked")
+            .go_in("unlocked")
+            .when("coin")
+            .coming_from("unlocked")
+            .go_in("locked")
+            .when("push")
+        )
+
+        fsm("push")
+
+        dumped = Automaton.dump(fsm)
+        restored = Automaton.load(dumped)
+        self.assertEqual(fsm, restored)

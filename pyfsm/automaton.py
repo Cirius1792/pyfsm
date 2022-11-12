@@ -43,14 +43,15 @@ class State(Mapping):
      - actions to be performed for each event occurring in the current state
     """
 
-    def __init__(self, name, fail_for_undefined_events=False) -> None:
-
+    def __init__(
+        self,
+        name,
+    ) -> None:
         self.name = name
         self.transitions: Dict[ActionTargetTuple] = {}
         self._event = None
         self._action = None
         self._target = None
-        self._strict_mode = fail_for_undefined_events
 
     def _reset(self):
         self._event = None
@@ -134,24 +135,37 @@ class State(Mapping):
                 return False
             visited.add(state_a.name)
             for k, v in state_a.transitions.items():
-                if v.action != state_b.transitions[k].action or not _eq(v.target, state_b.transitions[k].target, visited):
+                if v.action != state_b.transitions[k].action or not _eq(
+                    v.target, state_b.transitions[k].target, visited
+                ):
                     return False
             return True
+
         return _eq(self, o, set())
 
-    @staticmethod
-    def dump(state: TState):
+    def __dict__(self):
         def _dump(current: State, visited: Set[str]) -> List[Tuple]:
             if current.name in visited:
                 return []
             nodes = []
             visited.add(current.name)
             for event, action_target_tuple in current.transitions.items():
-                nodes.append((current.name, event, action_target_tuple.action, action_target_tuple.target.name))
+                nodes.append(
+                    (
+                        current.name,
+                        event,
+                        action_target_tuple.action,
+                        action_target_tuple.target.name,
+                    )
+                )
                 nodes = nodes + _dump(action_target_tuple.target, visited)
             return nodes
 
-        return json.dumps(_dump(state, set()))
+        return _dump(self, set())
+
+    @staticmethod
+    def dump(state: TState):
+        return json.dumps(state.__dict__())
 
     @staticmethod
     def load(states_dump: str):
@@ -174,11 +188,13 @@ class State(Mapping):
 
 
 class Automaton:
-    def __init__(self):
+    def __init__(self, name=None, version=1):
         self._current_state = None
         self._initial_state = None
         self.states = {}
         self._current_configuring_state: Optional[State] = None
+        self.name = name
+        self.version = version
 
     def start_from(self, state_name: str) -> TAutomaton:
         self = self.coming_from(state_name)
@@ -217,6 +233,9 @@ class Automaton:
             self._current_state = self._initial_state
         return self._current_state
 
+    def set_current_state(self, state_name):
+        self._current_state = self.states[state_name]
+
     def __call__(self, event):
         if self._current_state is None:
             self._current_state = self._initial_state
@@ -229,4 +248,40 @@ class Automaton:
     def __eq__(self, o):
         if not isinstance(o, Automaton) or o is None:
             return False
-        return self._initial_state == o.get_initial_state()
+        
+        return self.name != o.name \
+            or self._initial_state == o.get_initial_state() \
+                or self.get_current_state().name != o.get_current_state().name
+
+    def __dict__(self):
+        dct = {}
+        if self.name:
+            dct['name'] = self.name
+        dct['version'] = self.version
+        dct = {"states": self._initial_state.__dict__()}
+        dct['current_state'] = self._current_state.name
+        dct['initial_state'] = self._initial_state.name
+        return dct
+
+    @staticmethod
+    def dump(automaton: TAutomaton):
+        return json.dumps(automaton.__dict__())
+
+    @staticmethod
+    def load(automaton_dump):
+        dct = json.loads(automaton_dump)
+        this = Automaton()
+        if 'name' in dct:
+            this.name = dct['name']
+        this.version = dict['version']
+        state_list = dct['states']
+        start_state = None
+        for name, event, action, target in state_list:
+            if start_state is None:
+                this.start_from(name)
+            else:
+                this.coming_from(name)
+            this.go_in(target).doing(action).when(event)
+        this.set_current_state(dct['current_state'])
+        this._initial_state = this.states[dct['initial_state']]
+        return this
