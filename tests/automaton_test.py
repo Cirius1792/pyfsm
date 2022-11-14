@@ -1,6 +1,6 @@
 import json
 from unittest import TestCase
-from pyautomaton.automaton import Automaton, State, StateConfigurationError, IllegalEventError
+from pyautomaton.automaton import Automaton, State, IllegalEventError
 
 
 class StatesTestCase(TestCase):

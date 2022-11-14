@@ -10,13 +10,6 @@ TAutomaton = TypeVar("TAutomaton", bound="Automaton")
 ActionTargetTuple = namedtuple("ActionTargetTuple", "action target")
 
 
-class StateConfigurationError(Exception):
-    def __init__(self, state, event):
-        Exception.__init__(self, f"Event {event} not supported in state {state}")
-        self.state = state
-        self.event = event
-
-
 class MissingStateDeclarationError(Exception):
     """This error is thrown when an action, event or target state is provided to the configuration API before to declare the source state."""
 
@@ -110,23 +103,29 @@ class State(Mapping):
         return self.transitions[event].action
 
     def __getitem__(self, event) -> Tuple[str, TState]:
+        """Return the action, if any, and the state associated to the given event.
+
+        An IllegalEventError is raised fi the event is not allowed in this state."""
         if event in self.transitions:
             action_target = self.transitions[event]
             return action_target.action, action_target.target
         else:
-            raise StateConfigurationError(self.name, event)
+            raise IllegalEventError(self.name, event)
 
     def __contains__(self, event):
+        """Returns true if the event is allowed in this state."""
         return event in self.transitions
 
     def __iter__(self):
+        """Iterate over all the event and transitions defined for this state."""
         return self.transitions.__iter__()
 
     def __len__(self):
+        """Return the number of events defined over this state."""
         return len(self.transitions)
 
     def __eq__(self, o):
-        """Copares the state and all the subgraph made by the possible transitions starting from this state."""
+        """Compare the state and all the subgraph made by the possible transitions starting from this state."""
         def _eq(state_a, state_b, visited):
             if not isinstance(state_b, State):
                 return False
@@ -168,12 +167,12 @@ class State(Mapping):
 
     @staticmethod
     def dump(state: TState) -> str:
-        """Produces a string dump of the state in json format, inlcuding all the transitions and actions in its subgraph."""
+        """Return a string dump of the state in json format, inlcuding all the transitions and actions in its subgraph."""
         return json.dumps(state.__dict__())
 
     @staticmethod
     def load(states_dump: str):
-        """Starting from a string dump of the state in json format, it returns a State object."""
+        """Return a State object starting from a string dump of the state in json."""
         states_list = json.loads(states_dump)
         this = None
         states = {}
@@ -193,7 +192,7 @@ class State(Mapping):
 
 
 class Automaton:
-    """Commodity class to define and use state machines."""
+    """Utility class to define and use state machines."""
 
     def __init__(self, name=None, version=1):
         self._current_state = None
@@ -252,6 +251,10 @@ class Automaton:
         self._current_state = self.states[state_name]
 
     def __call__(self, event):
+        """Execute the state transition binded with the given event.
+
+        The action associated with the executed transition is returned and the current state of the automaton is updated.
+        """
         if self._current_state is None:
             self._current_state = self._initial_state
         if event not in self._current_state:
