@@ -18,6 +18,8 @@ class StateConfigurationError(Exception):
 
 
 class MissingStateDeclarationError(Exception):
+    """This error is thrown when an action, event or target state is provided to the configuration API before to declare the source state."""
+
     def __init__(self):
         Exception.__init__(
             self,
@@ -26,7 +28,7 @@ class MissingStateDeclarationError(Exception):
 
 
 class IllegalEventError(Exception):
-    """This error is thrown when an event is issued in a state in which it is not allowed"""
+    """This error is thrown when an event is issued in a state in which it is not allowed."""
 
     def __init__(self, state, event):
         Exception.__init__(self, f"Event {event} not supported in state {state}")
@@ -75,7 +77,7 @@ class State(Mapping):
         return self
 
     def do(self, action) -> TState:
-        """What to do when the transition will occur"""
+        """Define the action associated with the transition."""
         if not self._event:
             self._action = action
             return self
@@ -89,7 +91,7 @@ class State(Mapping):
         return self
 
     def go_in(self, target: TState) -> TState:
-        "In which state to go when the transition will occur"
+        """Define the state to go in when the transition will occur."""
         if not self._event:
             self._target = target
             return self
@@ -104,7 +106,7 @@ class State(Mapping):
         return "State: " + self.name
 
     def get_action(self, event):
-        """Return the action associated to the transition that will occurr when the event will be recieved"""
+        """Return the action associated to the transition that will occurr when the event will be recieved."""
         return self.transitions[event].action
 
     def __getitem__(self, event) -> Tuple[str, TState]:
@@ -124,6 +126,7 @@ class State(Mapping):
         return len(self.transitions)
 
     def __eq__(self, o):
+        """Copares the state and all the subgraph made by the possible transitions starting from this state."""
         def _eq(state_a, state_b, visited):
             if not isinstance(state_b, State):
                 return False
@@ -164,11 +167,13 @@ class State(Mapping):
         return _dump(self, set())
 
     @staticmethod
-    def dump(state: TState):
+    def dump(state: TState) -> str:
+        """Produces a string dump of the state in json format, inlcuding all the transitions and actions in its subgraph."""
         return json.dumps(state.__dict__())
 
     @staticmethod
     def load(states_dump: str):
+        """Starting from a string dump of the state in json format, it returns a State object."""
         states_list = json.loads(states_dump)
         this = None
         states = {}
@@ -188,6 +193,8 @@ class State(Mapping):
 
 
 class Automaton:
+    """Commodity class to define and use state machines."""
+
     def __init__(self, name=None, version=1):
         self._current_state = None
         self._initial_state = None
@@ -197,43 +204,51 @@ class Automaton:
         self.version = version
 
     def start_from(self, state_name: str) -> TAutomaton:
+        """Define the initial state."""
         self = self.coming_from(state_name)
         self._initial_state = self.states[state_name]
         return self
 
     def go_in(self, state_name: str) -> TAutomaton:
+        """Define the target state to go in when a given event occurrs."""
         if state_name not in self.states:
             self.states[state_name] = State(state_name)
         self._current_configuring_state.go_in(self.states[state_name])
         return self
 
     def coming_from(self, state_name: str) -> TAutomaton:
+        """Define the source state for the following event, action and target state definitions."""
         if state_name not in self.states:
             self.states[state_name] = State(state_name)
         self._current_configuring_state = self.states[state_name]
         return self
 
     def when(self, event: str) -> TAutomaton:
+        """Define the event triggering the transition."""
         if self._current_configuring_state is None:
             raise MissingStateDeclarationError()
         self._current_configuring_state.when(event)
         return self
 
     def doing(self, action: str) -> TAutomaton:
+        """Define the action to perform when an event occurrs."""
         if self._current_configuring_state is None:
             raise MissingStateDeclarationError()
         self._current_configuring_state.do(action)
         return self
 
     def get_initial_state(self) -> State:
+        """Return the initial state of the automaton."""
         return self._initial_state
 
     def get_current_state(self) -> State:
+        """Return the current state of the automaton."""
         if self._current_state is None:
             self._current_state = self._initial_state
         return self._current_state
 
     def set_current_state(self, state_name):
+        """Set the current state of the state machine"""
         self._current_state = self.states[state_name]
 
     def __call__(self, event):
@@ -248,18 +263,20 @@ class Automaton:
     def __eq__(self, o):
         if not isinstance(o, Automaton) or o is None:
             return False
-        
-        return self.name != o.name \
-            or self._initial_state == o.get_initial_state() \
-                or self.get_current_state().name != o.get_current_state().name
+
+        return (
+            self.name != o.name
+            or self._initial_state == o.get_initial_state()
+            or self.get_current_state().name != o.get_current_state().name
+        )
 
     def __dict__(self):
         dct = {"states": self._initial_state.__dict__()}
         if self.name:
-            dct['name'] = self.name
-        dct['version'] = self.version
-        dct['current_state'] = self._current_state.name
-        dct['initial_state'] = self._initial_state.name
+            dct["name"] = self.name
+        dct["version"] = self.version
+        dct["current_state"] = self._current_state.name
+        dct["initial_state"] = self._initial_state.name
         return dct
 
     @staticmethod
@@ -270,10 +287,10 @@ class Automaton:
     def load(automaton_dump):
         dct = json.loads(automaton_dump)
         this = Automaton()
-        if 'name' in dct:
-            this.name = dct['name']
-        this.version = dct['version']
-        state_list = dct['states']
+        if "name" in dct:
+            this.name = dct["name"]
+        this.version = dct["version"]
+        state_list = dct["states"]
         start_state = None
         for name, event, action, target in state_list:
             if start_state is None:
@@ -281,6 +298,6 @@ class Automaton:
             else:
                 this.coming_from(name)
             this.go_in(target).doing(action).when(event)
-        this.set_current_state(dct['current_state'])
-        this._initial_state = this.states[dct['initial_state']]
+        this.set_current_state(dct["current_state"])
+        this._initial_state = this.states[dct["initial_state"]]
         return this
