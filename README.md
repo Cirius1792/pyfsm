@@ -3,6 +3,12 @@
 ## Description 
 PyAutomaton is a simple library implementing Mealy state machines, thus meaning that the events produced by the automaton are determined by the tuple (state, event) and not only on the current state, as happens with Moore state machines. 
 
+## Installation 
+
+```
+pip install pytautomaton
+```
+
 ## Basic Usage
 PyAutomaton offers the possibility of declare State Machines by using a fluent descriptive style.
 For example, given the state machine in the following figure: 
