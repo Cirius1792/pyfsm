@@ -268,9 +268,9 @@ class Automaton:
             return False
 
         return (
-            self.name != o.name
-            or self._initial_state == o.get_initial_state()
-            or self.get_current_state().name != o.get_current_state().name
+            self.name == o.name
+            and self._initial_state == o.get_initial_state()
+            and self.get_current_state().name == o.get_current_state().name
         )
 
     def __dict__(self):
