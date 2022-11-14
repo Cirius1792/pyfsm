@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyautomaton"
-version = "0.2.1"
+version = "0.2.2"
 description = "a simple library to define reusable Finite State Machines with a fluent delcarative style"
 homepage="https://github.com/Cirius1792/pyfsm"
 repository="https://github.com/Cirius1792/pyfsm"
