@@ -283,11 +283,13 @@ class Automaton:
         return dct
 
     @staticmethod
-    def dump(automaton: TAutomaton):
+    def dump(automaton: TAutomaton) -> str:
+        """Return a string dump in json format of the automaton, including all its attributes."""
         return json.dumps(automaton.__dict__())
 
     @staticmethod
-    def load(automaton_dump):
+    def load(automaton_dump:str):
+        """Return an automaton restored from the received dump in json format."""
         dct = json.loads(automaton_dump)
         this = Automaton()
         if "name" in dct:
