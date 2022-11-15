@@ -17,9 +17,9 @@ For example, given the state machine in the following figure:
 the code implementing this state machine is: 
 ```python
 fsm = Automaton().start_from("locked").go_in("locked").when("push") \
-                    .coming_from("locked").go_in("unlocked").when("coin") \
+                    .coming_from("locked").go_in("unlocked").doing("unlock").when("coin") \
                     .coming_from("unlocked").go_in("unlocked").when("coin") \
-                    .coming_from("unlocked").go_in("locked").when("push")
+                    .coming_from("unlocked").go_in("locked").doing("lock").when("push")
 ```
 
 And the machine can run by invoking the fsm object as follow: 
